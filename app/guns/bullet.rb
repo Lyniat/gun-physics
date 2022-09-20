@@ -7,6 +7,9 @@ class Bullet < AdvancedProjectile
   HIT_TYPE_DESTROY = 0
   HIT_TYPE_BOUNCE = 1
   HIT_TYPE_STICK = 2
+  HIT_TYPE_TONE = 3
+  HIT_TYPE_FISH = 4
+  HIT_TYPE_MAGIC = 5
 
   DMG_TICK = 10
 
@@ -16,7 +19,7 @@ class Bullet < AdvancedProjectile
     @has_hit = false
     @last_angle = 0
     @life_time = LIFE_TIME
-    @total_lifetime = LIFE_TIME
+    @total_lifetime = LIFE_TIME * ((hit_type == HIT_TYPE_TONE or hit_type == HIT_TYPE_MAGIC)? 2.5 : 1)
     @hit_type = hit_type
     @gravity = gravity
     @damage = damage.ceil
@@ -31,13 +34,26 @@ class Bullet < AdvancedProjectile
       sprite = '/sprites/bullet_round.png'
     when HIT_TYPE_STICK
       sprite = '/sprites/arrow_flame.png'
+    when HIT_TYPE_TONE
+      sprite = "/sprites/tone_#{rand(4)}.png"
+    when HIT_TYPE_FISH
+      sprite = "/sprites/fish.png"
+    when HIT_TYPE_MAGIC
+      sprite = "/sprites/star.png"
     end
 
     @drawable = Sprite.new(SIZE,SIZE, sprite, 0, 16, 16, 5, 5)
   end
 
   def simulate(tick_count)
-    @y_speed += @gravity unless @is_riding
+    if @hit_type == HIT_TYPE_FISH
+      @y_speed -= 0.1
+    else
+      @y_speed += @gravity unless @is_riding
+    end
+    if @hit_type == HIT_TYPE_MAGIC
+      @y_speed -= Math.sin(tick_count / 6) * 0.3
+    end
     super(tick_count)
 
     @total_lifetime -= 1
@@ -89,11 +105,19 @@ class Bullet < AdvancedProjectile
     case @hit_type
     when HIT_TYPE_DESTROY
       destroy
+    when HIT_TYPE_TONE
+      destroy
     when HIT_TYPE_BOUNCE
       if direction == HORIZONTAL
         @x_speed *= -1
       else
         @y_speed *= -1
+      end
+    when HIT_TYPE_FISH
+      if direction == HORIZONTAL
+        @x_speed *= -0.7
+      else
+        @y_speed *= -0.7
       end
     when HIT_TYPE_STICK
       @x_speed = 0
