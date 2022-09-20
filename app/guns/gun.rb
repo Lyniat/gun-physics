@@ -26,6 +26,11 @@ class Gun
     @automatic = false
     @bullet_speed = 1
     @rating = 0
+    @max_acceleration = 0
+    @current_speed = 0
+    @was_triggered = false
+    @crit_chance = 0
+    @max_crit = 0
     randomize
   end
 
@@ -43,6 +48,7 @@ class Gun
     s_spray = (@spray * 100).ceil
     s_damage = @damage.ceil
     s_automatic = @automatic? "automatic" : "semi-automatic"
+    s_warmup = (@max_acceleration > 0)? "#{((@current_speed / @max_acceleration) * 100)} %" : "none"
 
     r = COLOR_TRASH.r
     g = COLOR_TRASH.g
@@ -81,6 +87,9 @@ class Gun
     $args.outputs.labels << [0, HEIGHT - 380, "MAGAZINE: #{@magazine} / #{@max_magazine}", 0, 0, 255, 0, 0]
     $args.outputs.labels << [0, HEIGHT - 400, "RELOAD TIME: #{@reload_time}", 0, 0, 255, 0, 0]
     $args.outputs.labels << [0, HEIGHT - 420, "PROJECTILE SPEED: #{@bullet_speed}", 0, 0, 255, 0, 0]
+    $args.outputs.labels << [0, HEIGHT - 440, "WARMUP: #{s_warmup}", 0, 0, 255, 0, 0]
+    $args.outputs.labels << [0, HEIGHT - 460, "CRIT CHANCE: #{@crit_chance}%", 0, 0, 255, 0, 0]
+    $args.outputs.labels << [0, HEIGHT - 480, "CRIT DAMAGE: #{@max_crit}%", 0, 0, 255, 0, 0]
   end
 
   def get_ready args
@@ -92,13 +101,36 @@ class Gun
     @reloading = false
   end
 
+  def simulate(tick_count)
+    unless @was_triggered
+      @current_speed -= 1
+      if @current_speed < 0
+        @current_speed = 0
+      end
+    end
+    @was_triggered = false
+
+    @current_speed = 0 if @reloading
+  end
+
   def fire(mid_x, mid_y, dir_x, dir_y, held)
+    if held && @max_acceleration > 0
+      @current_speed += 1
+      @was_triggered = true
+      if @current_speed > @max_acceleration
+        @current_speed = @max_acceleration
+      end
+    end
     if held && !@automatic
       return
     end
     if @ready
       @ready = false
-      Service.new(@speed, method(:get_ready), {}, false)
+      warmup = 0
+      if @max_acceleration != 0
+        warmup = (1 - (@current_speed / @max_acceleration)) * @speed * 2
+      end
+      Service.new(@speed + warmup, method(:get_ready), {}, false)
     else
       return
     end
@@ -120,7 +152,7 @@ class Gun
     if !@has_multiple_projectiles
       sin = Math.sin(angle)
       cos = Math.cos(angle)
-      Bullet.new(mid_x, mid_y, cos, sin, @hit_type, @gravity, @damage, @bullet_speed)
+      Bullet.new(mid_x, mid_y, cos, sin, @hit_type, @gravity, @damage, @bullet_speed, @crit_chance,@max_crit)
     else
       i = 0
       while i < @projectiles
@@ -128,7 +160,7 @@ class Gun
         angle += projectile_angle
         sin = Math.sin(angle)
         cos = Math.cos(angle)
-        Bullet.new(mid_x, mid_y, cos, sin, @hit_type, @gravity, @damage / @projectiles, @bullet_speed)
+        Bullet.new(mid_x, mid_y, cos, sin, @hit_type, @gravity, @damage / @projectiles, @bullet_speed, @crit_chance,@max_crit)
         i += 1
       end
     end
@@ -154,14 +186,20 @@ class Gun
     @reload_time = 0.2 + reload_time / 100
     @automatic = rand(2) == 0
     @bullet_speed = (@hit_type == Bullet::HIT_TYPE_STICK)? 12 + rand(12) : 20 + rand(20)
+    @max_acceleration = (max_magazine > 30 && @automatic)? (3 + rand(300) / 100) * 60 : 0
+    @crit_chance = rand(51)
+    @max_crit = rand(101)
 
     @rating += 1 - (gravity / 60)
     @rating += damage / 50
-    @rating += 1 - (speed / 100)
+    @rating += (1 - (speed / 100)) * 2 #dmg has double weight
     @rating += max_magazine / 50
     @rating += 1 - (reload_time / 250)
+    @rating += (@max_acceleration > 0)? 0 : 1
+    @rating += (@crit_chance / 50) * 2 #crit has double weight
+    @rating += (@max_crit / 100) * 2 #crit has double weight
 
-    @rating /= 5
+    @rating /= 11
     @rating *= 100
     @rating = @rating.round
   end

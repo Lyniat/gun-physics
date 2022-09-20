@@ -36,8 +36,8 @@ class Target < Solid
     super(tick_count)
   end
 
-  def on_bullet_hit(x, y, damage)
-    DamagePopup.new(x + @w / 2, y + @h / 2, damage)
+  def on_bullet_hit(x, y, damage, is_critical)
+    DamagePopup.new(x + @w / 2, y + @h / 2, damage, is_critical)
 
     @current_dmg += damage
   end

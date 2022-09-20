@@ -71,6 +71,7 @@ class Player < Actor
   end
 
   def simulate(tick_count)
+    @gun.simulate(tick_count)
     if @is_climbing
       @drawable = @anm_climb
     else

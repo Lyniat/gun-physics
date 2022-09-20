@@ -10,7 +10,7 @@ class Bullet < AdvancedProjectile
 
   DMG_TICK = 10
 
-  def initialize(x, y, x_speed, y_speed, hit_type, gravity, damage, speed)
+  def initialize(x, y, x_speed, y_speed, hit_type, gravity, damage, speed, crit_chance, max_crit)
     @speed = speed
     super(x, y, x_speed * @speed, y_speed * @speed, SIZE, SIZE, @drawable)
     @has_hit = false
@@ -20,6 +20,8 @@ class Bullet < AdvancedProjectile
     @hit_type = hit_type
     @gravity = gravity
     @damage = damage.ceil
+    @crit_chance = crit_chance
+    @max_crit = max_crit
     @dmg_service = nil
 
     case @hit_type
@@ -71,12 +73,14 @@ class Bullet < AdvancedProjectile
   end
 
   def do_damage args
-    args.collider.on_bullet_hit(@x, @y, ((@damage / DMG_TICK) * ((LIFE_TIME / 60) / DMG_TICK)).ceil)
+    crit = crit_damage
+    args.collider.on_bullet_hit(@x, @y, (((@damage + crit) / DMG_TICK) * ((LIFE_TIME / 60) / DMG_TICK)).ceil, crit > 0)
   end
 
   def on_hit(collider, direction)
     if collider.respond_to?(:on_bullet_hit)
-      collider.on_bullet_hit(@x, @y, @damage)
+      crit = crit_damage
+      collider.on_bullet_hit(@x, @y, @damage + crit, crit > 0)
     end
     unless @has_hit
       @total_lifetime = LIFE_TIME
@@ -98,5 +102,13 @@ class Bullet < AdvancedProjectile
         @dmg_service = Service.new(1 / DMG_TICK, method(:do_damage), {collider: collider}, true)
       end
     end
+  end
+
+  def crit_damage
+    r = rand(100) + 1
+    if r <= @crit_chance
+      return (@damage * (@max_crit / 100)).ceil
+    end
+    return 0
   end
 end
