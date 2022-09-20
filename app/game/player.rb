@@ -38,7 +38,7 @@ class Player < Actor
     @y_speed = JUMP_VELOCITY unless solid_below?.nil? || @is_climbing
   end
 
-  def fire(at_x, at_y)
+  def fire(at_x, at_y, held)
     mid_x = x + w / 2
     mid_y = y + h / 2
 
@@ -50,7 +50,7 @@ class Player < Actor
     dir_x /= highest
     dir_y /= highest
 
-    @gun.fire(mid_x, mid_y, dir_x, dir_y)
+    @gun.fire(mid_x, mid_y, dir_x, dir_y, held)
   end
 
   def randomize_gun
@@ -108,6 +108,8 @@ class Player < Actor
 
   def draw(tick_count)
     @gun.draw(tick_count)
+    camera = Level.instance.camera
+    $args.outputs.labels << [@x - camera.x, @y - camera.y + @h + 20, "RELOADING...", 0, 0, 0, 0, 0] if @gun.reloading
     @is_climbing = false
     super
   end

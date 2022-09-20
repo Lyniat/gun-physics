@@ -2,8 +2,7 @@ class Bullet < AdvancedProjectile
 
   SIZE = 10
   ANGLE_OFFSET = -45
-  INITIAL_SPEED = 15
-  LIFE_TIME = 3 * 60
+  LIFE_TIME = 2 * 60
 
   HIT_TYPE_DESTROY = 0
   HIT_TYPE_BOUNCE = 1
@@ -11,8 +10,9 @@ class Bullet < AdvancedProjectile
 
   DMG_TICK = 10
 
-  def initialize(x, y, x_speed, y_speed, hit_type, gravity, damage)
-    super(x, y, x_speed * INITIAL_SPEED, y_speed * INITIAL_SPEED, SIZE, SIZE, @drawable)
+  def initialize(x, y, x_speed, y_speed, hit_type, gravity, damage, speed)
+    @speed = speed
+    super(x, y, x_speed * @speed, y_speed * @speed, SIZE, SIZE, @drawable)
     @has_hit = false
     @last_angle = 0
     @life_time = LIFE_TIME

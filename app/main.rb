@@ -68,7 +68,8 @@ def tick args
     @player.move_up if args.inputs.keyboard.key_held.w
     @player.move_down if args.inputs.keyboard.key_held.s
     @player.jump if args.inputs.keyboard.key_down.space
-    @player.fire(@camera.mouse_x, @camera.mouse_y) if args.inputs.mouse.click
+    @player.fire(@camera.mouse_x, @camera.mouse_y, false) if args.inputs.mouse.click
+    @player.fire(@camera.mouse_x, @camera.mouse_y, true) if args.inputs.mouse.button_left
 
     @player.randomize_gun if args.inputs.keyboard.key_down.r
   end
