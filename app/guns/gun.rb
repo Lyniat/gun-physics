@@ -31,6 +31,17 @@ class Gun
     @was_triggered = false
     @crit_chance = 0
     @max_crit = 0
+    @kickback = 0
+    @engine_sound_enabled = false
+
+    $args.audio[:gun_engine] = {
+      input: 'sounds/engine.wav',
+      gain: 0.0,
+      pitch: 1.0,
+      paused: false,
+      looping: true,
+    }
+
     randomize
   end
 
@@ -90,6 +101,7 @@ class Gun
     $args.outputs.labels << [0, HEIGHT - 440, "WARMUP: #{s_warmup}", 0, 0, 255, 0, 0]
     $args.outputs.labels << [0, HEIGHT - 460, "CRIT CHANCE: #{@crit_chance}%", 0, 0, 255, 0, 0]
     $args.outputs.labels << [0, HEIGHT - 480, "CRIT DAMAGE: #{@max_crit}%", 0, 0, 255, 0, 0]
+    $args.outputs.labels << [0, HEIGHT - 500, "KICKBACK: #{@kickback}", 0, 0, 255, 0, 0]
   end
 
   def get_ready args
@@ -111,6 +123,15 @@ class Gun
     @was_triggered = false
 
     @current_speed = 0 if @reloading
+
+    gain = @engine_sound_enabled? (@current_speed / @max_acceleration) + 0.1 : 0
+
+    if gain > 1
+      gain = 1
+    end
+
+    $args.audio[:gun_engine].gain = gain
+    $args.audio[:gun_engine].pitch = 0.5 + (@current_speed / @max_acceleration)
   end
 
   def fire(mid_x, mid_y, dir_x, dir_y, held)
@@ -122,7 +143,7 @@ class Gun
       end
     end
     if held && !@automatic
-      return
+      return 0 #kickback
     end
     if @ready
       @ready = false
@@ -132,16 +153,22 @@ class Gun
       end
       Service.new(@speed + warmup, method(:get_ready), {}, false)
     else
-      return
+      return 0 #kickback
     end
 
     if @magazine == 0 && !@reloading
       @reloading = true
       Service.new(@reload_time, method(:reloaded), {}, false)
+      $args.audio[:gun_reload] = {
+        input: 'sounds/reload.wav',
+        gain: 1.0,
+        paused: false,
+        looping: false,
+      }
     end
 
     if @reloading
-      return
+      return 0 #kickback
     end
 
     @magazine -= 1
@@ -153,6 +180,13 @@ class Gun
       sin = Math.sin(angle)
       cos = Math.cos(angle)
       Bullet.new(mid_x, mid_y, cos, sin, @hit_type, @gravity, @damage, @bullet_speed, @crit_chance,@max_crit)
+      $args.audio[:gun_shot] = {
+        input: 'sounds/bow.wav',
+        gain: 1.0,
+        pitch: 1.0 + rand(100) / 500,
+        paused: false,
+        looping: false,
+      }
     else
       i = 0
       while i < @projectiles
@@ -163,7 +197,15 @@ class Gun
         Bullet.new(mid_x, mid_y, cos, sin, @hit_type, @gravity, @damage / @projectiles, @bullet_speed, @crit_chance,@max_crit)
         i += 1
       end
+      $args.audio[:gun_shot] = {
+        input: 'sounds/shotgun.wav',
+        gain: 1.0,
+        pitch: 1.0 + rand(100) / 500,
+        paused: false,
+        looping: false,
+      }
     end
+    return @kickback
   end
 
   def randomize
@@ -189,6 +231,9 @@ class Gun
     @max_acceleration = (max_magazine > 30 && @automatic)? (3 + rand(300) / 100) * 60 : 0
     @crit_chance = rand(51)
     @max_crit = rand(101)
+    @kickback = (damage > 40)? (rand(200) / 100) * @projectiles : 0
+
+    @engine_sound_enabled = @max_acceleration > 0
 
     @rating += 1 - (gravity / 60)
     @rating += damage / 50

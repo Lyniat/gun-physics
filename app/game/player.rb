@@ -50,7 +50,9 @@ class Player < Actor
     dir_x /= highest
     dir_y /= highest
 
-    @gun.fire(mid_x, mid_y, dir_x, dir_y, held)
+    kickback = @gun.fire(mid_x, mid_y, dir_x, dir_y, held)
+    move_x(kickback * (dir_x > 0? -1 : 1))
+    move_y(kickback / 2)
   end
 
   def randomize_gun
