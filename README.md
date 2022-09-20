@@ -1,6 +1,6 @@
 # Gun Physics Example for Dragon Ruby
 
-![Example](/screenshots/collisions_2.gif)
+![Example](/screenshots/guns_screenshot.gif)
 
 - [Playable example](https://lyniat.github.io/gun-physics/)
 - based on my [platformer example](https://github.com/Lyniat/platformer-physics)
