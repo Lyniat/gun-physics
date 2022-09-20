@@ -1,4 +1,4 @@
-# Platformer Physics Example for Dragon Ruby
+# Gun Physics Example for Dragon Ruby
 
 ![Example](/screenshots/collisions_2.gif)
 
