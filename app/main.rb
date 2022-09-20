@@ -70,6 +70,7 @@ def tick args
     @player.jump if args.inputs.keyboard.key_down.space
     @player.fire(@camera.mouse_x, @camera.mouse_y, false) if args.inputs.mouse.click
     @player.fire(@camera.mouse_x, @camera.mouse_y, true) if args.inputs.mouse.button_left
+    @player.update_mouse(@camera.mouse_x, @camera.mouse_y)
 
     @player.randomize_gun if args.inputs.keyboard.key_down.r
   end
@@ -90,6 +91,11 @@ def tick args
   args.outputs.labels << [0, HEIGHT - 100, "pause: BACKSPACE", 0, 0, 255, 0, 0]
   args.outputs.labels << [0, HEIGHT - 120, "randomize gun: R", 0, 0, 255, 0, 0]
 
+  $args.outputs.sprites << {x: 0,
+                            y: 0,
+                            w: 160,
+                            h: 160,
+                            path: :gun}
 end
 
 def reset args

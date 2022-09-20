@@ -15,6 +15,7 @@ class Player < Actor
     @facing_right = true
     @is_climbing = false
     @dead = false
+    @last_angle = 0
     @gun = Gun.new
   end
 
@@ -36,6 +37,16 @@ class Player < Actor
 
   def jump
     @y_speed = JUMP_VELOCITY unless solid_below?.nil? || @is_climbing
+  end
+
+  def update_mouse(at_x, at_y)
+    mid_x = x + w / 2
+    mid_y = y + h / 2
+
+    dir_x = at_x - mid_x
+    dir_y = at_y - mid_y
+
+    @last_angle = Math.atan2(dir_y, dir_x) * 57.29578
   end
 
   def fire(at_x, at_y, held)
@@ -115,6 +126,16 @@ class Player < Actor
     $args.outputs.labels << [@x - camera.x, @y - camera.y + @h + 20, "RELOADING...", 0, 0, 0, 0, 0] if @gun.reloading
     @is_climbing = false
     super
+    x_offset = @facing_right? 30 : -60
+    $args.outputs.sprites << {x: @x - camera.x + x_offset,
+                              y: @y - camera.y,
+                              w: 100,
+                              h: 100,
+                              path: :gun,
+                              angle_anchor_x: @facing_right? 0 : 1,
+                              angle_anchor_y: 0.35,
+                              flip_horizontally: !@facing_right,
+                              angle: @last_angle + (@facing_right? 0 : 180)}
   end
 
   def on_collision_y(squish, collider)

@@ -13,10 +13,10 @@ class Gun
   ENCHANTMENT_COLOR_ASCENDEND = {r:230, g:186, b:138}
 
   ENCHANTMENT_FACTOR_NONE = 1
-  ENCHANTMENT_FACTOR_CHAOTIC = 1.2
-  ENCHANTMENT_FACTOR_VOLATILE = 1.4
-  ENCHANTMENT_FACTOR_PRIMORDIAL = 1.6
-  ENCHANTMENT_FACTOR_ASCENDEND = 1.8
+  ENCHANTMENT_FACTOR_CHAOTIC = 1.4
+  ENCHANTMENT_FACTOR_VOLATILE = 1.8
+  ENCHANTMENT_FACTOR_PRIMORDIAL = 2.2
+  ENCHANTMENT_FACTOR_ASCENDEND = 2.6
 
   ENCHANTMENT_NONE = 0
   ENCHANTMENT_CHAOTIC = 1
@@ -28,6 +28,16 @@ class Gun
   SPECIAL_GUN_TYPE_FUNK = 1
   SPECIAL_GUN_TYPE_FISH = 2
   SPECIAL_GUN_TYPE_MAGIC = 3
+
+  SPRITE_BASE = "/sprites/guns/base.png"
+  SPRITE_ADDON = "/sprites/guns/addon/addon_"
+  SPRITE_GRIP = "/sprites/guns/grip/grip_"
+  SPRITE_HAMMER = "/sprites/guns/hammer/hammer_"
+  SPRITE_SCOPE = "/sprites/guns/scope/scope_"
+  SPRITE_SLIDE = "/sprites/guns/slide/slide_"
+  SPRITE_TRIGGER = "/sprites/guns/trigger/trigger_"
+
+  SPRITE_PARTS = [SPRITE_ADDON, SPRITE_GRIP, SPRITE_HAMMER, SPRITE_SCOPE, SPRITE_SLIDE, SPRITE_TRIGGER]
 
   WORDS_GUN = ["Gun", "Killer", "Murderer", "Hunter", "Piece", "Boom-Boom",
                "Torturer", "Punisher", "Machine" , "Destroyer", "King", "Knight",
@@ -72,10 +82,30 @@ class Gun
     @special_type = SPECIAL_GUN_TYPE_NONE
 
     randomize
+    generate_sprite
+  end
+
+  def generate_sprite
+    $args.render_target(:gun).clear_before_render = true
+    $args.render_target(:gun).sprites << { x: 0,
+                                                  y: 0,
+                                                  w: 8 * 128,
+                                                  h: 8 * 72,
+                                                  path: SPRITE_BASE}
+    i = 0
+    while i < SPRITE_PARTS.length
+      part = rand(4)
+      $args.render_target(:gun).sprites << { x: 0,
+                                               y: 0,
+                                               w: 8 * 128,
+                                               h: 8 * 72,
+                                               path: "#{SPRITE_PARTS[i]}#{part}.png"}
+      i += 1
+    end
   end
 
   def set_engine_sound
-    audio = "sounds/engine.wav"
+    audio = (rand(2) == 0)? "sounds/engine.wav" : "sounds/engine_2.wav"
     case @special_type
     when SPECIAL_GUN_TYPE_FUNK
       audio = "sounds/funk.ogg"
@@ -275,12 +305,14 @@ class Gun
     @magazine -= 1
 
     angle = Math.atan2(dir_y, dir_x)
-    spray_angle = (rand(@spray) - @spray/2) / 3
+    start_x = mid_x + dir_x * 50
+    start_y = mid_y + dir_y * 40
+    spray_angle = 0 #TODO: fix
     angle += spray_angle
     if !@has_multiple_projectiles
       sin = Math.sin(angle)
       cos = Math.cos(angle)
-      Bullet.new(mid_x, mid_y, cos, sin, @hit_type, @gravity, @damage, @bullet_speed, @crit_chance,@max_crit)
+      Bullet.new(start_x, start_y, cos, sin, @hit_type, @gravity, @damage, @bullet_speed, @crit_chance,@max_crit)
       sound = "sounds/bow.wav"
     else
       i = 0
@@ -289,7 +321,7 @@ class Gun
         angle += projectile_angle
         sin = Math.sin(angle)
         cos = Math.cos(angle)
-        Bullet.new(mid_x, mid_y, cos, sin, @hit_type, @gravity, @damage / @projectiles, @bullet_speed, @crit_chance,@max_crit)
+        Bullet.new(start_x, start_y, cos, sin, @hit_type, @gravity, @damage / @projectiles, @bullet_speed, @crit_chance,@max_crit)
         i += 1
       end
       sound = "sounds/shotgun.wav"
@@ -339,7 +371,7 @@ class Gun
     @hit_type = rand(3)
     @has_gravity = rand(2) == 0
     gravity = rand(60)
-    @gravity = @has_gravity? -gravity / 60 : 0
+    @gravity = @has_gravity? -gravity / 180 : 0
     @has_spray = rand(2) == 0
     @spray = @has_spray? rand(2) : 0
     @has_multiple_projectiles = rand(2) == 0
@@ -365,7 +397,7 @@ class Gun
     @special_type = SPECIAL_GUN_TYPE_NONE
     is_special = rand(2) == 0
     if is_special
-      @special_type = 1 + rand(3)
+      @special_type = 1 + rand(100)
       case @special_type
       when SPECIAL_GUN_TYPE_FUNK
         @bullet_speed = 1
