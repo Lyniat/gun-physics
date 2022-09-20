@@ -375,21 +375,21 @@ class Gun
     @has_spray = rand(2) == 0
     @spray = @has_spray? rand(2) : 0
     @has_multiple_projectiles = rand(2) == 0
-    @projectiles = (@has_multiple_projectiles? rand(MAX_PROJECTILES - 1) + 2 : 1) * (@enchantment_factor * 1.5)
+    @projectiles = ((@has_multiple_projectiles? rand(MAX_PROJECTILES - 1) + 2 : 1) * (@enchantment_factor * 1.5)).ceil
     damage = rand(51)
-    @damage = (damage + 25) * @enchantment_factor
+    @damage = ((damage + 25) * @enchantment_factor).ceil
     speed = rand(101)
     @speed = (0.2 + speed / 300)# / @enchantment_factor TODO: slows down game if too fast
     max_magazine = rand(50)
-    @max_magazine = max_magazine + 1
-    @magazine = @max_magazine * @enchantment_factor
+    @max_magazine = ((max_magazine + 1) * @enchantment_factor).ceil
+    @magazine = @max_magazine
     reload_time = rand(250)
-    @reload_time = (0.2 + reload_time / 100) / @enchantment_factor
+    @reload_time = ((0.2 + reload_time / 100) / @enchantment_factor).ceil
     @automatic = rand(2) == 0
     @bullet_speed = ((@hit_type == Bullet::HIT_TYPE_STICK)? 12 + rand(12) : 20 + rand(20)) * @enchantment_factor
     @max_acceleration = ((max_magazine > 30 && @automatic)? (3 + rand(300) / 100) * 60 : 0) / @enchantment_factor
-    @crit_chance = rand(51) * @enchantment_factor
-    @max_crit = rand(101) * @enchantment_factor
+    @crit_chance = (rand(51) * @enchantment_factor).ceil
+    @max_crit = (rand(101) * @enchantment_factor).ceil
     @kickback = ((damage > 40)? (rand(200) / 100) * @projectiles : 0) / @enchantment_factor
 
     @engine_sound_enabled = @max_acceleration > 0
@@ -414,7 +414,7 @@ class Gun
         @bullet_speed = 6
         @automatic = true
         @max_acceleration = 300
-        @magazine = 70
+        @magazine = 20
         @max_magazine = @magazine
         @hit_type = Bullet::HIT_TYPE_FISH
         @projectiles = 1
@@ -425,7 +425,7 @@ class Gun
         @bullet_speed = 1
         @automatic = true
         @max_acceleration = 1
-        @magazine = 70
+        @magazine = 50
         @max_magazine = @magazine
         @hit_type = Bullet::HIT_TYPE_MAGIC
         @projectiles = 1
